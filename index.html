@@ -1,137 +1,289 @@
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NOUVEM — Customer Management System (CRUD)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOUVEM — Customer Management System (CRUD)</title>
+
+<!--
+  A single-file customer management app with full CRUD.
+    C = Create -add a customer
+    R = Read - see them in the table
+    U = Update - edit a customer
+    D = Delete  - remove a customer
+-->
+
+<style>
+  /* Define colourways once here, reuse them everywhere below. */
+  :root {
+    --brand: #256d4f;      
+    --brand-dark: #1a5039;
+    --ink: #203934;
+    --paper: #f6f4ee;
+    --line: #ddd8cc;
+    --muted: #6b7772;
+    --danger: #b23b34;
+  }
+
+  /* box-sizing: border-box; means padding never breaks widths */
+  * { box-sizing: border-box; }        
+
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  /* Top bar with the brand name */
+  header {
+    background: var(--brand-dark);
+    color: #e9e9e9;
+    padding: 18px 24px;
+  }
+  header h1 { margin: 0; font-size: 20px; }
+  header span { font-size: 13px; opacity: .8; }
+
+  /* Centre the content and give it breathing room */
+  main { max-width: 900px; margin: 24px auto; padding: 0 24px; }
+
+  /* The form sits in a white card above the table */
+  .card {
+    background: #f7f4f4;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 24px;
+  }
+  .card h2 { margin: 0 0 14px; font-size: 16px; }
+
+  /* Inputs laid out in a simple responsive grid */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  input:focus, select:focus { outline: 2px solid var(--brand); }
+
+  /* Buttons: default green, plus grey and red variants */
+  .btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--brand);
+    cursor: pointer;
+  }
+  .btn:hover { background: var(--brand-dark); }
+  .btn.grey { background: #8a8f8b; }
+  .btn.red  { background: var(--danger); }
+  .btn.small { padding: 6px 12px; font-size: 13px; }
+  .actions { margin-top: 14px; display: flex; gap: 8px; }
+
+  /* Here's the table that lists all the customers. */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #e9e6e6;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  th { background: #fbfaf6; font-size: 13px; color: var(--muted); }
+  tr:last-child td { border-bottom: none; }
+  .row-btns { display: flex; gap: 6px; }
+
+  /* Small coloured status pill */
+  .pill { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .pill.on  { background: #e6f0ea; color: var(--brand-dark); }
+  .pill.off { background: #eeeae0; color: var(--muted); }
+</style>
 </head>
+
 <body>
-  <!-- App header -->
-  <header class="app">
+
+  <header>
     <h1>NOUVEM</h1>
-    <span class="tag">Customer Management System (CRUD)</span>
+    <span>Customer Management System</span>
   </header>
-</body>
-</html>
 
-```html
-<table>
-  <thead>
-    <tr>
-      <th>Customer_name</th>
-      <th>Email</th>
-      <th>Phone_number</th>
-      <th>Status</th>
-      <th style="text-align:right">Actions</th>
-    </tr>
-  </thead>
-  <!-- data is stored in a JavaScript array of objects, which is easy to manipulate. -->
-  <tbody id="rows"></tbody>
-</table>
+  <main>
 
+    <!-- ============ THE FORM (used for both CREATE and UPDATE) ============
+         One form does double duty. A hidden field remembers whether we're
+         adding a new customer or editing an existing one. -->
+    <div class="card">
+      <h2 id="formTitle">Add customer</h2>
+
+      <input type="hidden" id="editId">   <!-- empty = adding, set = editing -->
+
+      <div class="grid">
+        <input id="name"    type="text"  placeholder="Name">
+        <input id="company" type="text"  placeholder="Company">
+        <input id="email"   type="email" placeholder="Email">
+        <input id="phone"   type="text"  placeholder="Phone">
+        <select id="status">
+          <option>Active</option>
+          <option>Inactive</option>
+        </select>
+      </div>
+
+      <div class="actions">
+        <button class="btn"      onclick="save()">Save</button>
+        <button class="btn grey" onclick="clearForm()">Clear</button>
+      </div>
+    </div>
+
+    <!-- ============ THE TABLE (this is the READ part) ============
+         The <tbody> is left empty on purpose — JavaScript fills it in,
+         so the table always matches the data. -->
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th><th>Company</th><th>Email</th>
+          <th>Phone</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+
+  </main>
 
 <script>
+
+/* THE IN-MEMORY DATABASE
+   This is a single-page app, so we don't have a real database. Instead,
+   we keep the data in a plain array of objects.  */
+
 let customers = [
   { id: 1, name: "Aoife Murphy",  company: "Green Valley Meats", email: "aoife@greenvalley.ie",  phone: "+353 1 234 5678", status: "Active" },
   { id: 2, name: "Liam Byrne",    company: "Byrne Poultry Ltd",  email: "liam@byrnepoultry.ie",  phone: "+353 21 998 1122", status: "Active" },
   { id: 3, name: "Saoirse Kelly", company: "Kelly Fine Foods",   email: "s.kelly@kellyfoods.ie", phone: "+353 91 555 0303", status: "Inactive" },
 ];
 
-const $ = (id) => document.getElementById(id);
-    
-// Each time the data changes, call render() to update the table.
+let nextId = 4;   // add a new customer? give them this id, then increment it for the next one.
+
+// Cut corner: a shorthand for document.getElementById()
+const $ = id => document.getElementById(id);
+
+
+/* READ — draw the table from the array.
+   This is the most important function: EVERY change (add, edit,
+   delete) just updates the array and calls render() again, so the
+   screen can never fall out of sync with the data.*/
+
 function render() {
-  const rows = $("rows");
-  rows.innerHTML = "";
+  let html = "";
   customers.forEach(c => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${c.name}</td>
-      <td>${c.email}</td>
-      <td>${c.phone}</td>
-      <td>${c.status}</td>
-      <td></td>`;
-    rows.appendChild(tr);
+    // Pick the pill style based on status.
+    const pill = c.status === "Active"
+      ? '<span class="pill on">Active</span>'
+      : '<span class="pill off">Inactive</span>';
+
+    // Build one table row. The Edit/Delete buttons pass this row's id.
+    html += `
+      <tr>
+        <td>${c.name}</td>
+        <td>${c.company}</td>
+        <td>${c.email}</td>
+        <td>${c.phone}</td>
+        <td>${pill}</td>
+        <td>
+          <div class="row-btns">
+            <button class="btn grey small" onclick="edit(${c.id})">Edit</button>
+            <button class="btn red small"  onclick="remove(${c.id})">Delete</button>
+          </div>
+        </td>
+      </tr>`;
   });
+  $("rows").innerHTML = html;   // put the finished rows into the table
 }
 
-render(); // draw the table for the first time
-</script>
-```
 
-
-```html
-<style>
-  :root {
-    /* Color palette */
-    --ink: #1a2b28;
-    --paper: #f6f4ee;
-    --panel: #ffffff;
-    --line: #d9d5c9;
-    --brand: #256d4f;       
-    --brand-dark: #1a5039;
-    --muted: #6b7772;
-    --danger: #9d3d38;      
-    --radius: 10px;
-  }
-  /* ...full styles in the file... */
-</style>
-```
-
-```html
-<button class="btn" id="addBtn">+ New customer</button>
-
-<!-- One form for both creating and editing. The form is hidden until the user clicks "New customer" or "Edit". -->
-<div class="overlay" id="formOverlay">
-  <div class="modal">
-    <header id="formTitle">New customer</header>
-    <div class="body">
-      <!-- Empty hidden field to store the id of the customer being edited. If it's empty, the form is creating a new customer. -->
-      <input type="hidden" id="editId">
-      <div class="field">
-        <label for="name">Name</label>
-        <input id="name" type="text">
-      </div>
-      <!-- ...company, email, phone, status fields... -->
-    </div>
-    <footer>
-      <button class="btn secondary" id="cancelForm">Cancel</button>
-      <button class="btn" id="saveForm">Save customer</button>
-    </footer>
-  </div>
-</div>
-
-<script>
-// null means the form is creating a new customer; otherwise, it's editing an existing customer.
-function openForm(customer) {
-  $("editId").value = customer ? customer.id : "";
-  $("formTitle").textContent = customer ? "Edit customer" : "New customer";
-  $("name").value = customer ? customer.name : "";
-  // ...fill the rest of the fields the same way...
-  $("formOverlay").classList.add("open");
-  $("name").focus(); // focus the first field for better UX
-}
-
+/* CREATE + UPDATE — both handled by one save() function.
+   If the hidden editId is empty  -> we're adding a new customer.
+   If it holds an id              -> we're updating that customer. */
 function save() {
+  const name = $("name").value.trim();
+
+  // Simple validation: name is the one field we insist on.
+  if (!name) { alert("Please enter a name."); return; }
+
+  // Collect the values from the form into one object.
   const data = {
-    name: $("name").value.trim(),
+    name:    name,
     company: $("company").value.trim(),
-    email: $("email").value.trim(),
-    phone: $("phone").value.trim(),
-    status: $("status").value
+    email:   $("email").value.trim(),
+    phone:   $("phone").value.trim(),
+    status:  $("status").value
   };
-  // nextId hands out unique ids the way a database auto-increment would.
-  customers.push({ id: nextId++, ...data });
-  $("formOverlay").classList.remove("open");
-  render(); // array changed, so redraw the table
+
+  const id = $("editId").value;
+
+  if (id) {
+    // UPDATE: find the matching customer and overwrite their fields.
+    const c = customers.find(x => x.id === Number(id));
+    Object.assign(c, data);
+  } else {
+    // CREATE: add a brand-new customer with the next id.
+    customers.push({ id: nextId++, ...data });
+  }
+
+  clearForm();   // reset the form back to "add" mode
+  render();      // redraw the table with the change
 }
 
-let nextId = 4; // continue from the last id in the initial array (4)
 
-$("addBtn").onclick = () => openForm(null);
-$("saveForm").onclick = save;
-$("cancelForm").onclick = () => $("formOverlay").classList.remove("open");
+/*  UPDATE — load a customer's details into the form.
+   The actual saving is still done by save() above. */
+
+function edit(id) {
+  const c = customers.find(x => x.id === id);
+
+  // Fill the form with this customer's current values.
+  $("editId").value  = c.id;      // remember WHICH one we're editing
+  $("name").value    = c.name;
+  $("company").value = c.company;
+  $("email").value   = c.email;
+  $("phone").value   = c.phone;
+  $("status").value  = c.status;
+
+  $("formTitle").textContent = "Edit customer";  // tell the user the mode
+  window.scrollTo(0, 0);                          // bring the form into view
+}
+
+
+/* DELETE — remove a customer, after a confirmation.
+   filter() keeps everyone EXCEPT the one we're deleting.*/
+function remove(id) {
+  const c = customers.find(x => x.id === id);
+  if (!confirm(`Delete ${c.name}?`)) return;   // ask first — deletion is final
+
+  customers = customers.filter(x => x.id !== id);
+  render();
+}
+
+
+/* Reset the form back to "add" mode. */
+function clearForm() {
+  $("editId").value  = "";
+  $("name").value    = "";
+  $("company").value = "";
+  $("email").value   = "";
+  $("phone").value   = "";
+  $("status").value  = "Active";
+  $("formTitle").textContent = "Add customer";
+}
+
+
+render();   // draw the initial table when the page loads
 </script>
-```
+</body>
+</html>
