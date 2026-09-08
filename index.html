@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NOUVEM — Customer Management System (CRUD)</title>
 
-<!--
-  A single-file customer management app with full CRUD.
+<!--A single-file customer management app with full CRUD.
     C = Create -add a customer
     R = Read - see them in the table
     U = Update - edit a customer
@@ -111,14 +110,14 @@
 
   <header>
     <h1>NOUVEM</h1>
-    <span>Customer Management System</span>
+    <span>Customer Management System (CRUD)</span>
   </header>
 
   <main>
 
-    <!-- ============ THE FORM (used for both CREATE and UPDATE) ============
-         One form does double duty. A hidden field remembers whether we're
+    <!-- THE FORM (used for both CREATE and UPDATE) A hidden field remembers whether we're
          adding a new customer or editing an existing one. -->
+
     <div class="card">
       <h2 id="formTitle">Add customer</h2>
 
@@ -130,7 +129,7 @@
         <input id="email"   type="email" placeholder="Email">
         <input id="phone"   type="text"  placeholder="Phone">
         <select id="status">
-          <option>Active</option>
+          <option>Active</option> // 
           <option>Inactive</option>
         </select>
       </div>
@@ -141,8 +140,7 @@
       </div>
     </div>
 
-    <!-- ============ THE TABLE (this is the READ part) ============
-         The <tbody> is left empty on purpose — JavaScript fills it in,
+    <!-- THE TABLE - The <tbody> is left empty on purpose — JavaScript fills it in,
          so the table always matches the data. -->
     <table>
       <thead>
@@ -208,8 +206,8 @@ function render() {
 
 
 /* CREATE + UPDATE — both handled by one save() function.
-   If the hidden editId is empty  -> we're adding a new customer.
-   If it holds an id              -> we're updating that customer. */
+   If the hidden editId is empty - we're adding a new customer.
+   If it holds an id -we're updating that customer. */
 function save() {
   const name = $("name").value.trim();
 
