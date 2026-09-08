@@ -73,9 +73,65 @@ render(); // draw the table for the first time
     --brand: #256d4f;       
     --brand-dark: #1a5039;
     --muted: #6b7772;
-    --danger: #b23b34;      
+    --danger: #9d3d38;      
     --radius: 10px;
   }
   /* ...full styles in the file... */
 </style>
+```
+
+```html
+<button class="btn" id="addBtn">+ New customer</button>
+
+<!-- One form for both creating and editing. The form is hidden until the user clicks "New customer" or "Edit". -->
+<div class="overlay" id="formOverlay">
+  <div class="modal">
+    <header id="formTitle">New customer</header>
+    <div class="body">
+      <!-- Empty hidden field to store the id of the customer being edited. If it's empty, the form is creating a new customer. -->
+      <input type="hidden" id="editId">
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" type="text">
+      </div>
+      <!-- ...company, email, phone, status fields... -->
+    </div>
+    <footer>
+      <button class="btn secondary" id="cancelForm">Cancel</button>
+      <button class="btn" id="saveForm">Save customer</button>
+    </footer>
+  </div>
+</div>
+
+<script>
+// null means the form is creating a new customer; otherwise, it's editing an existing customer.
+function openForm(customer) {
+  $("editId").value = customer ? customer.id : "";
+  $("formTitle").textContent = customer ? "Edit customer" : "New customer";
+  $("name").value = customer ? customer.name : "";
+  // ...fill the rest of the fields the same way...
+  $("formOverlay").classList.add("open");
+  $("name").focus(); // focus the first field for better UX
+}
+
+function save() {
+  const data = {
+    name: $("name").value.trim(),
+    company: $("company").value.trim(),
+    email: $("email").value.trim(),
+    phone: $("phone").value.trim(),
+    status: $("status").value
+  };
+  // nextId hands out unique ids the way a database auto-increment would.
+  customers.push({ id: nextId++, ...data });
+  $("formOverlay").classList.remove("open");
+  render(); // array changed, so redraw the table
+}
+
+let nextId = 4; // continue from the last id in the initial array (4)
+
+$("addBtn").onclick = () => openForm(null);
+$("saveForm").onclick = save;
+$("cancelForm").onclick = () => $("formOverlay").classList.remove("open");
+</script>
 ```
