@@ -99,7 +99,7 @@
   tr:last-child td { border-bottom: none; }
   .row-btns { display: flex; gap: 6px; }
 
-  /* Small coloured status pill */
+  /* Small pill-shaped labels for the status column. */
   .pill { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
   .pill.on  { background: #e6f0ea; color: var(--brand-dark); }
   .pill.off { background: #eeeae0; color: var(--muted); }
@@ -129,7 +129,7 @@
         <input id="email"   type="email" placeholder="Email">
         <input id="phone"   type="text"  placeholder="Phone">
         <select id="status">
-          <option>Active</option> // 
+          <option>Active</option>  <!--Active or Inactive status for the customer.-->
           <option>Inactive</option>
         </select>
       </div>
@@ -162,8 +162,8 @@
 
 let customers = [
   { id: 1, name: "Aoife Murphy",  company: "Green Valley Meats", email: "aoife@greenvalley.ie",  phone: "+353 1 234 5678", status: "Active" },
-  { id: 2, name: "Liam Byrne",    company: "Byrne Poultry Ltd",  email: "liam@byrnepoultry.ie",  phone: "+353 21 998 1122", status: "Active" },
-  { id: 3, name: "Saoirse Kelly", company: "Kelly Fine Foods",   email: "s.kelly@kellyfoods.ie", phone: "+353 91 555 0303", status: "Inactive" },
+  { id: 2, name: "Liam Byrne",    company: "Byrne Poultry Ltd",  email: "liam@byrnepoultry.ie",  phone: "+353 21 998 1122", status: "Inactive" },
+  { id: 3, name: "Ark Jedrzejewski", company: "Kelly Fine Foods",   email: "a.jedrzejewski@kellyfoods.ie", phone: "+353 91 555 0303", status: "Active" },
 ];
 
 let nextId = 4;   // add a new customer? give them this id, then increment it for the next one.
